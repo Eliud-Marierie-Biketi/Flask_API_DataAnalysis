@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center mb-4">Farm Analysis</h1>
+    <div class="form-group">
+        <label for="farmerSelect">Select Farmer:</label>
+        <select id="farmerSelect" class="form-control" onchange="fetchAnalysisData()">
+            <option value="">Select a farmer</option>
+            {% for farmer in farmers %}
+            <option value="{{ farmer.id }}">{{ farmer.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div id="analysisResult" style="margin-top: 20px;">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Milk Production</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="milkProductionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Milk Sales</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="milkSalesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Maintenance Costs</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="maintenanceCostsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Feeds Expenses</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="feedsExpensesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Medicine Expenses</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="medicineExpensesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Equipment Expenses</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="equipmentExpensesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Profit/Loss Analysis</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="profitLossChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Projected Profit/Loss</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="projectedProfitLossChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Summary Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Total Milk Production: <span id="milkProductionTotal"></span></p>
+                        <p>Total Milk Sales: <span id="milkSalesTotal"></span></p>
+                        <p>Total Maintenance Costs: <span id="maintenanceCostsTotal"></span></p>
+                        <p>Total Feeds Cost: <span id="feedsCost"></span></p>
+                        <p>Total Medicine Cost: <span id="medicineCost"></span></p>
+                        <p>Total Equipment Cost: <span id="equipmentCost"></span></p>
+                        <p>Total Expenses: <span id="totalExpenses"></span></p>
+                        <p>Profit/Loss: <span id="profitLoss"></span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function fetchAnalysisData() {
+        var farmer_id = document.getElementById('farmerSelect').value;
+        if (!farmer_id) {
+            console.error('No farmer ID selected');
+            return;
+        }
+
+        fetch('/fetch_analysis_data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'farmer_id=' + encodeURIComponent(farmer_id),
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Update Milk Production Chart
+            updateChart('milkProductionChart', data.milk_production_labels, data.milk_production_values, 'Milk Produced', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)');
+
+            // Update Milk Sales Chart
+            updateChart('milkSalesChart', data.milk_sales_labels, data.milk_sales_values, 'Milk Sales Revenue', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 1)');
+
+            // Update Maintenance Costs Chart
+            updateChart('maintenanceCostsChart', data.maintenance_costs_labels, data.maintenance_costs_values, 'Maintenance Costs', 'rgba(75, 192, 192, 0.2)', 'rgba(75, 192, 192, 1)');
+
+            // Update Feeds Expenses Chart
+            updateChart('feedsExpensesChart', data.feeds_labels, data.feeds_costs, 'Feeds Expenses', 'rgba(153, 102, 255, 0.2)', 'rgba(153, 102, 255, 1)');
+
+            // Update Medicine Expenses Chart
+            updateChart('medicineExpensesChart', data.medicine_labels, data.medicine_costs, 'Medicine Expenses', 'rgba(255, 159, 64, 0.2)', 'rgba(255, 159, 64, 1)');
+
+            // Update Equipment Expenses Chart
+            updateChart('equipmentExpensesChart', data.equipment_labels, data.equipment_costs, 'Equipment Expenses', 'rgba(255, 205, 86, 0.2)', 'rgba(255, 205, 86, 1)');
+
+            // Update Profit/Loss Analysis Chart
+            var profitLossChart = document.getElementById('profitLossChart').getContext('2d');
+            if (window.profitLossChartInstance) {
+                window.profitLossChartInstance.destroy();
+            }
+            window.profitLossChartInstance = new Chart(profitLossChart, {
+                type: 'bar',
+                data: {
+                    labels: ['Profit/Loss'],
+                    datasets: [{
+                        label: 'Profit/Loss',
+                        data: [data.summary_statistics.profit_loss],
+                        backgroundColor: data.summary_statistics.profit_loss >= 0 ? 'rgba(75, 192, 192, 0.2)' : 'rgba(255, 99, 132, 0.2)',
+                        borderColor: data.summary_statistics.profit_loss >= 0 ? 'rgba(75, 192, 192, 1)' : 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Update Projected Profit/Loss Chart (Example: static for illustration)
+            var projectedProfitLossChart = document.getElementById('projectedProfitLossChart').getContext('2d');
+            if (window.projectedProfitLossChartInstance) {
+                window.projectedProfitLossChartInstance.destroy();
+            }
+            window.projectedProfitLossChartInstance = new Chart(projectedProfitLossChart, {
+                type: 'bar',
+                data: {
+                    labels: ['Projected Profit/Loss'],
+                    datasets: [{
+                        label: 'Projected Profit/Loss',
+                        data: [10000],  // Example value for projected profit/loss
+                        backgroundColor: '#4CAF50',
+                        borderColor: '#4CAF50',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Update Summary Statistics
+            document.getElementById('milkProductionTotal').textContent = data.summary_statistics.milk_production_total.toFixed(2);
+            document.getElementById('milkSalesTotal').textContent = data.summary_statistics.milk_sales_total.toFixed(2);
+            document.getElementById('maintenanceCostsTotal').textContent = data.summary_statistics.maintenance_costs_total.toFixed(2);
+            document.getElementById('feedsCost').textContent = data.summary_statistics.total_feeds_cost.toFixed(2);
+            document.getElementById('medicineCost').textContent = data.summary_statistics.total_medicine_cost.toFixed(2);
+            document.getElementById('equipmentCost').textContent = data.summary_statistics.total_equipment_cost.toFixed(2);
+            document.getElementById('totalExpenses').textContent = data.summary_statistics.total_expenses.toFixed(2);
+            document.getElementById('profitLoss').textContent = data.summary_statistics.profit_loss.toFixed(2);
+        })
+        .catch(error => {
+            console.error('Error fetching analysis data:', error);
+        });
+    }
+
+    function updateChart(chartId, labels, data, label, backgroundColor, borderColor) {
+        var chartCanvas = document.getElementById(chartId);
+        var chartContext = chartCanvas.getContext('2d');
+        if (window[`${chartId}Instance`]) {
+            window[`${chartId}Instance`].destroy();
+        }
+        window[`${chartId}Instance`] = new Chart(chartContext, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: backgroundColor,
+                    borderColor: borderColor,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                },
+                elements: {
+                    line: {
+                        tension: 0.4, // Control the curve of the lines
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+{% endblock %}
